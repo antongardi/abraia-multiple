@@ -70,6 +70,10 @@ def xyz_to_sRGB(XYZ):
     return np.dstack([R, G, B])
 
 
+def spec_to_rgb(cube):
+    return xyz_to_sRGB(spec_to_xyz(cube))
+
+
 def learn_decor_bands(sequence, maxcomponents=6):
     """Get spectral principal components over a sequence of hsi cubes"""
     nbands = sequence[0].shape[2]
