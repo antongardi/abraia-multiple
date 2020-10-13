@@ -16,14 +16,16 @@ class Multiple(Abraia):
         basename = os.path.basename(path)
         folder = dirname + '/' if dirname else dirname
         files, folders = super(Multiple, self).list_files(path=self.userid + '/' + folder)
-        files = list(map(lambda f: {'name': f['name'], 'size': f['size'], 'date': f['date'], 'path': f['source'][length:]}, files))
+        files = list(map(lambda f: {'path': f['source'][length:], 'size': f['size'], 'date': f['date']}, files))
         if basename:
             files = list(filter(lambda f: fnmatch(f['path'], path), files))
         return files
 
+    def load_file(self, path):
+        return self.download_file(self.userid + '/' + path)
+
     def load_image(self, path):
-        f = self.from_store(path).to_buffer()
-        return np.asarray(Image.open(f))
+        return np.asarray(Image.open(self.load_file(path)))
 
     def load_header(self, path):
         header = os.path.basename(path)
