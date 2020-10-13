@@ -1,22 +1,29 @@
-# Abraia API extension for HSI processing and analysis
-from abraia import Abraia
-
 import os
 import numpy as np
 from PIL import Image
-# import matplotlib.pyplot as plt
+from fnmatch import fnmatch
 import spectral.io.envi as envi
+from abraia import Abraia
 
 
 class Multiple(Abraia):
     def __init__(self, folder=''):
         super(Multiple, self).__init__()
 
+    def list_files(self, path):
+        length = len(self.userid) + 1
+        dirname = os.path.dirname(path)
+        basename = os.path.basename(path)
+        folder = dirname + '/' if dirname else dirname
+        files, folders = super(Multiple, self).list_files(path=self.userid + '/' + folder)
+        files = list(map(lambda f: {'name': f['name'], 'size': f['size'], 'date': f['date'], 'path': f['source'][length:]}, files))
+        if basename:
+            files = list(filter(lambda f: fnmatch(f['path'], path), files))
+        return files
+
     def load_image(self, path):
         f = self.from_store(path).to_buffer()
-        img = np.asarray(Image.open(f))
-        # img = plt.imread(f, format=path[-3:])
-        return img
+        return np.asarray(Image.open(f))
 
     def load_header(self, path):
         header = os.path.basename(path)
@@ -42,7 +49,7 @@ class Multiple(Abraia):
         cube = np.dstack([img[(k % r)::r, (k // c)::c] for k in range(r * c)])
         return cube
 
-    def load_meta(self, path):
+    def load_metadata(self, path):
         if path.endswith('.hdr'):
             return self.load_header(path)
-        return self.load_metadata(self.userid + '/' + path)
+        return super(Multiple, self).load_metadata(self.userid + '/' + path)
