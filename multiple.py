@@ -3,7 +3,8 @@ from abraia import Abraia
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+from PIL import Image
+# import matplotlib.pyplot as plt
 import spectral.io.envi as envi
 
 
@@ -13,8 +14,9 @@ class Multiple(Abraia):
 
     def load_image(self, path):
         f = self.from_store(path).to_buffer()
-        img = plt.imread(f, format=path[-3:])
-        return np.array(img)
+        img = np.asarray(Image.open(f))
+        # img = plt.imread(f, format=path[-3:])
+        return img
 
     def load_header(self, path):
         header = os.path.basename(path)
@@ -44,25 +46,3 @@ class Multiple(Abraia):
         if path.endswith('.hdr'):
             return self.load_header(path)
         return self.load_metadata(self.userid + '/' + path)
-
-    def open_envi_images(self, remote_folder):
-        """Functions to demosaic HSI data and build spectral datacubes"""
-        sequence = []
-        files = self.list(remote_folder)[0]
-        for k, file in enumerate(filter(lambda f: f['name'].endswith('hdr'), files)):
-            cube = self.load_envi(file['path'])
-            sequence.append(cube)
-        print(f"{k + 1} ENVI images loaded from {remote_folder}")
-        return sequence
-
-    def demosaic_sequence(self, folder, Nframes=1, Startframe = 0):
-        """Demosaic sequence in a folder"""
-        sequence = []
-        files = self.list(folder)[0]
-        print(f"Mappig 4x4 HSI mosaics to specific bands")
-        for k, file in enumerate(files[Startframe:Startframe+Nframes]):
-            cube = self.load_mosaic(file['path'])
-            sequence.append(cube)
-            print(f"Frame no {k} with {cube.shape[2]} bands")
-        print(f"Number of HSI frames: {len(sequence)}")
-        return sequence
