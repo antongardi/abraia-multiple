@@ -81,7 +81,7 @@ def saliency_map(band):
 
 def saliency(hsi):
     """Calculate saliency map of HSI cube"""
-    return np.sum([saliency_map(hsi[:, :, n]) for n in range(hsi.shape[2])], axis=1)
+    return np.sum([saliency_map(hsi[:, :, n]) for n in range(hsi.shape[2])], axis=2)
 
 
 def get_spectrum(hsi, point=None):
