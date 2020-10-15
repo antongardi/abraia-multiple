@@ -13,28 +13,12 @@ BANDS_WLTH = np.array([463, 469, 478, 490, 502, 514, 525, 540, 553, 555, 565, 57
 CMF = np.array(np.loadtxt(os.path.join(cf, 'cie-cmf_1nm.txt'), usecols=(0, 1, 2, 3)))
 
 
-# Functions to process and analyse HSI pictures
-def get_spectrum(hsi, x, y):
-    """Get spectrum at a given point"""
-    spectrum = [64 * hsi[band][x, y] for band in range(hsi.shape[2])]
-    return spectrum
-
-
-def get_salient_spectrum(hsi):
-    """Get spectrum at most salient point"""
-    saliency = saliency(hsi)
-    point = np.where(saliency == np.amax(saliency))
-    return get_spectrum(hsi, point[0], point[1])
-
-
 def spec_to_xyz(hsi):
     """Convert HSI cube in the visible espectrum to XYZ image (CIE1931)"""
+    size = hsi.shape[:2]
     nbands = hsi.shape[2]
-    Xcmf=[]
-    Ycmf=[] ; Zcmf=[]
-    X = np.zeros([256, 512])
-    Y = np.zeros([256, 512])
-    Z = np.zeros([256, 512])
+    Xcmf, Ycmf, Zcmf = [], [], []
+    X, Y, Z = np.zeros(size), np.zeros(size), np.zeros(size)
     for i in range(nbands):
         point = np.where(CMF == BANDS_WLTH[i])
         band_cmf = np.array(CMF[point[0]])
@@ -50,8 +34,7 @@ def spec_to_xyz(hsi):
 
 def xyz_to_sRGB(XYZ):
     """Convert XYZ (CIE1931) image to sRGB image"""
-    X = XYZ[:, :, 0]
-    Y = XYZ[:, :, 1] ; Z = XYZ[:, :, 2] 
+    X, Y, Z = XYZ[:, :, 0], XYZ[:, :, 1], XYZ[:, :, 2] 
     # https://en.wikipedia.org/wiki/SRGB
     r = 3.24096994 * X - 1.53738318 * Y - 0.49861076 * Z
     g = -0.96924364 * X + 1.8759675 * Y + 0.04155506 * Z
@@ -74,91 +57,40 @@ def spec_to_rgb(cube):
     return xyz_to_sRGB(spec_to_xyz(cube))
 
 
-def learn_decor_bands(sequence, maxcomponents=6):
-    """Get spectral principal components over a sequence of hsi cubes"""
-    nbands = sequence[0].shape[2]
-    #Prepare empty feature vectors for every spectral bands
-    vector1 = {}
-    for band in range(nbands):
-        vector1[band] = []
-    #Extract features from data
-    for current_frame in sequence:
-        for band in range(nbands):
-            bandVector = current_frame[:, :, band].flatten()
-            vector1[band].extend(bandVector)
-    #Arrange features in array for analysys
-    vector = [vector1[band] for band in range(nbands)]
-    #Learn PCA over the features from the whole sequence
-    X = np.transpose(np.stack(vector))
-    n_components = np.minimum(len(X), maxcomponents) 
-    return PCA(n_components=n_components)
+def decor_bands(hsi, n_components=3):
+    """Calculate principal components of hsi cube"""
+    h, w, d = hsi.shape
+    X = hsi.reshape((h * w), d)
+    pca = PCA(n_components=n_components)
+    bands = pca.fit_transform(X).reshape(h, w, n_components)
+    return bands, pca.components_
 
 
-def decor_bands(hsi, maxcomponents=6):
-    """Get principal components of hsi cube"""
-    nbands = hsi.shape[2]
-    #Extract features from bands and arrange in array
-    vector = [hsi[:, :, band].flatten() for band in range(nbands)]
-    #Learn PCA over the features from one HSI cube
-    X = np.transpose(np.stack(vector))
-    n_components = np.minimum(len(X), maxcomponents)
-    pca = PCA(n_components=n_components, whiten=True)
-    #Project bands to PC's and resize to original image dimensions
-    pca_result = pca.fit_transform(X)
-    pc_vector = np.transpose(pca_result)
-    pc_images = {}
-    for component in range(len(pc_vector)):
-        pc_im = pc_vector[component]
-        pc_im = pc_im.reshape(256, 512)
-        pc_images[component] = pc_im
-    return pc_images
-
-
-def project_bands(model, cube):
-    """Project bands to modelled PC's and resize to original image dimensions"""
-    pca_result = model.fit_transform(X)
-    pc_vector = np.transpose(pca_result)
-    pc_images = {}
-    for component in range(len(pc_vector)):
-        pc_im = pc_vector[component]
-        pc_im = pc_im.reshape(256, 512)
-        pc_images[component] = pc_im
-    return pc_images
-
-
-def saliency_map(in_im):
-    in_im = cv2.resize(in_im, dsize=(64, 64),
-                        interpolation=cv2.INTER_LANCZOS4)
-    myfft = np.fft.fft2(in_im)
+def saliency_map(band):
+    h, w = band.shape
+    band = cv2.resize(band, dsize=(64, 64), interpolation=cv2.INTER_LANCZOS4)
+    myfft = np.fft.fft2(band)
     myLogAmplitude = np.log(np.absolute(myfft))
     myPhase = np.angle(myfft)
     smoothAmplitude = cv2.blur(myLogAmplitude, (3, 3))
     mySpectralResidual = myLogAmplitude - smoothAmplitude
-    saliencyMap = np.absolute(np.fft.ifft2(
-        np.exp(mySpectralResidual + 1.j*myPhase)))
-    cv2.normalize(cv2.GaussianBlur(saliencyMap, (9, 9), 3, 3),
-                    saliencyMap, 0., 1., cv2.NORM_MINMAX)
-    return cv2.resize(saliencyMap, dsize=(512, 256), interpolation=cv2.INTER_LANCZOS4)
+    saliencyMap = np.absolute(np.fft.ifft2(np.exp(mySpectralResidual + 1.j * myPhase)))
+    cv2.normalize(cv2.GaussianBlur(saliencyMap, (9, 9), 3, 3), saliencyMap, 0., 1., cv2.NORM_MINMAX)
+    return cv2.resize(saliencyMap, dsize=(w, h), interpolation=cv2.INTER_LANCZOS4)
 
 
-def saliency(hsi, maxcomponents=6):
+def saliency(hsi):
     """Calculate saliency map of HSI cube"""
-    #Nmaps = np.minimum(maxcomponents, len(hsi))
-    pc_images = decor_bands(hsi, maxcomponents)
-    size = np.shape(pc_images[0])
-    sal = np.zeros((size[0], size[1]))
-    Nmaps = len(pc_images)
-    for component in range(Nmaps):
-        sal = sal + saliency_map(pc_images[component])
-    return sal
+    return np.sum([saliency_map(hsi[:, :, n]) for n in range(hsi.shape[2])], axis=1)
 
 
-def saliency_chr(hsi, maxcomponents=6):
-    """Calculate saliency map of HSI cube discarding intensity"""
-    pc_images = decor_bands(hsi, maxcomponents)
-    size = np.shape(pc_images[0])
-    sal = np.zeros((size[0], size[1]))
-    Nmaps = len(pc_images)
-    for component in range(Nmaps - 1):
-        sal = sal + saliency_map(pc_images[component + 1])
-    return sal
+def get_spectrum(hsi, point=None):
+    """Get spectrum at a given point (x, y)
+    
+    When a point is not specified the spectrum of the most salient point is returned.
+    """
+    if point is None:
+        sal = saliency(hsi)
+        idx = np.unravel_index(np.argmax(sal), sal.shape)
+        point = (idx[1], idx[0])
+    return hsi[point[1], point[0], :]

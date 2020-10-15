@@ -1,9 +1,10 @@
 import os
 import numpy as np
+
 from PIL import Image
-from fnmatch import fnmatch
-import spectral.io.envi as envi
 from abraia import Abraia
+from fnmatch import fnmatch
+from spectral.io import envi
 
 
 class Multiple(Abraia):
@@ -31,8 +32,7 @@ class Multiple(Abraia):
         header = os.path.basename(path)
         if not os.path.exists(header):
             self.from_store(path).to_file(header)
-        header = envi.open(header)
-        return header.metadata
+        return envi.read_envi_header(header)
 
     def load_envi(self, path):
         header = os.path.basename(path)
