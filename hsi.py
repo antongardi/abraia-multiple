@@ -1,19 +1,20 @@
 import os
-import cv2
 import numpy as np
+import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from PIL import Image
+
 
 cf = os.path.dirname(os.path.abspath(__file__))
 
 # HDR IMEC 463.50, 469.22, 477.88, 490.49, 502.47, 513.95, 524.59, 539.51, 552.80, 555.12, 565.04, 578.94, 592.51, 601.11, 	# 623.50, 630.70
 # Redondeadas 463, 469, 478, 490, 502, 514, 525, 540, 553, 555, 565, 579, 593, 601, 623, 631
 BANDS_WLTH = np.array([463, 469, 478, 490, 502, 514, 525, 540, 553, 555, 565, 579, 593, 601, 623, 631])
-#BANDS_WLTH = np.array([460, 470, 480, 490, 500, 510, 520, 535, 550, 560, 570, 580, 590, 600, 610, 620])
 CMF = np.array(np.loadtxt(os.path.join(cf, 'cie-cmf_1nm.txt'), usecols=(0, 1, 2, 3)))
 
 
-def spec_to_xyz(hsi):
+def spec_to_xyz(hsi, bands=BANDS_WLTH):
     """Convert HSI cube in the visible espectrum to XYZ image (CIE1931)"""
     size = hsi.shape[:2]
     nbands = hsi.shape[2]
@@ -66,22 +67,30 @@ def decor_bands(hsi, n_components=3):
     return bands, pca.components_
 
 
+def resize(img, size):
+    return np.array(Image.fromarray(img).resize(size, resample=Image.LANCZOS))
+
+
+def normalize(img):
+    min, max = np.amin(img), np.amax(img)
+    return (img - min) / (max - min)
+
+
 def saliency_map(band):
     h, w = band.shape
-    band = cv2.resize(band, dsize=(64, 64), interpolation=cv2.INTER_LANCZOS4)
-    myfft = np.fft.fft2(band)
-    myLogAmplitude = np.log(np.absolute(myfft))
-    myPhase = np.angle(myfft)
-    smoothAmplitude = cv2.blur(myLogAmplitude, (3, 3))
-    mySpectralResidual = myLogAmplitude - smoothAmplitude
-    saliencyMap = np.absolute(np.fft.ifft2(np.exp(mySpectralResidual + 1.j * myPhase)))
-    cv2.normalize(cv2.GaussianBlur(saliencyMap, (9, 9), 3, 3), saliencyMap, 0., 1., cv2.NORM_MINMAX)
-    return cv2.resize(saliencyMap, dsize=(w, h), interpolation=cv2.INTER_LANCZOS4)
+    myfft = np.fft.fft2(resize(band, (64, 64)))
+    logAmplitude, phase = np.log(np.absolute(myfft)), np.angle(myfft)
+    spectralResidual = logAmplitude - \
+        nd.uniform_filter(logAmplitude, size=3, mode='nearest')
+    saliencyMap = np.absolute(np.fft.ifft2(
+        np.exp(spectralResidual + 1.j * phase)))
+    saliencyMap = nd.gaussian_filter(saliencyMap, sigma=3)
+    return normalize(resize(saliencyMap, (w, h)))
 
 
 def saliency(hsi):
     """Calculate saliency map of HSI cube"""
-    return np.sum([saliency_map(hsi[:, :, n]) for n in range(hsi.shape[2])], axis=2)
+    return np.sum(np.dstack([saliency_map(hsi[:, :, n]) for n in range(hsi.shape[2])]), axis=2)
 
 
 def get_spectrum(hsi, point=None):
