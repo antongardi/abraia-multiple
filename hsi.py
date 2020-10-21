@@ -1,4 +1,5 @@
 import os
+import spectral
 import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
@@ -14,26 +15,20 @@ BANDS_WLTH = np.array([463, 469, 478, 490, 502, 514, 525, 540, 553, 555, 565, 57
 CMF = np.array(np.loadtxt(os.path.join(cf, 'cie-cmf_1nm.txt'), usecols=(0, 1, 2, 3)))
 
 
-def spec_to_xyz(hsi, bands=BANDS_WLTH):
+def __spec_to_xyz(hsi, bands=BANDS_WLTH):
     """Convert HSI cube in the visible espectrum to XYZ image (CIE1931)"""
-    size = hsi.shape[:2]
-    nbands = hsi.shape[2]
-    Xcmf, Ycmf, Zcmf = [], [], []
+    size, nbands = hsi.shape[:2], hsi.shape[2]
     X, Y, Z = np.zeros(size), np.zeros(size), np.zeros(size)
     for i in range(nbands):
-        point = np.where(CMF == BANDS_WLTH[i])
-        band_cmf = np.array(CMF[point[0]])
-        Xcmf.append(band_cmf[0][1])
-        Ycmf.append(band_cmf[0][2])
-        Zcmf.append(band_cmf[0][3])
+        band_cmf = np.array(CMF[np.where(CMF == BANDS_WLTH[i])[0]])
         band = hsi[:, :, i]
-        X = X + Xcmf[i] * band
-        Y = Y + Ycmf[i] * band
-        Z = Z + Zcmf[i] * band
+        X = X + band_cmf[0][1] * band
+        Y = Y + band_cmf[0][2] * band
+        Z = Z + band_cmf[0][3] * band
     return np.dstack([X, Y, Z])
 
 
-def xyz_to_sRGB(XYZ):
+def __xyz_to_sRGB(XYZ):
     """Convert XYZ (CIE1931) image to sRGB image"""
     X, Y, Z = XYZ[:, :, 0], XYZ[:, :, 1], XYZ[:, :, 2] 
     # https://en.wikipedia.org/wiki/SRGB
@@ -55,51 +50,76 @@ def xyz_to_sRGB(XYZ):
 
 
 def spec_to_rgb(cube):
-    return xyz_to_sRGB(spec_to_xyz(cube))
+    return __xyz_to_sRGB(__spec_to_xyz(cube))
 
 
-def decor_bands(hsi, n_components=3):
-    """Calculate principal components of hsi cube"""
-    h, w, d = hsi.shape
-    X = hsi.reshape((h * w), d)
+def random(img, n_bands=6, indexes=False):
+    """Returns a list of random bands"""
+    bands = []
+    indexes = []
+    for i in range(n_bands):
+        q = np.random.randint(img.shape[2])
+        indexes.append(q)
+        bands.append(img[:, :, q])
+    if indexes:
+        return bands, indexes
+    return bands
+
+
+def rgb(img, bands=None):
+    """Returns the RGB image from the selected bands (R, G, B)"""
+    return spectral.get_rgb(img, bands=bands)
+
+
+def ndvi(img, red_band, nir_band):
+    """Returns the NDVI image from the specified read and nir bands"""
+    return spectral.ndvi(img, red_band, nir_band)
+
+
+def principal_components(img, n_components=3, spectrum=False):
+    """Calculate principal components of the image"""
+    h, w, d = img.shape
+    X = img.reshape((h * w), d)
     pca = PCA(n_components=n_components)
     bands = pca.fit_transform(X).reshape(h, w, n_components)
-    return bands, pca.components_
+    if spectrum:
+        bands, pca.components_
+    return bands
 
 
 def resize(img, size):
+    """Resize the image to the given size (w, h)"""
     return np.array(Image.fromarray(img).resize(size, resample=Image.LANCZOS))
 
 
 def normalize(img):
+    """Normalize the image to the range [0, 1]"""
     min, max = np.amin(img), np.amax(img)
     return (img - min) / (max - min)
 
 
-def saliency_map(band):
-    h, w = band.shape
-    myfft = np.fft.fft2(resize(band, (64, 64)))
-    logAmplitude, phase = np.log(np.absolute(myfft)), np.angle(myfft)
-    spectralResidual = logAmplitude - \
-        nd.uniform_filter(logAmplitude, size=3, mode='nearest')
-    saliencyMap = np.absolute(np.fft.ifft2(
-        np.exp(spectralResidual + 1.j * phase)))
-    saliencyMap = nd.gaussian_filter(saliencyMap, sigma=3)
-    return normalize(resize(saliencyMap, (w, h)))
+def saliency(img):
+    """Calculate saliency map of the image"""
+    smaps = []
+    for n in range(img.shape[2]):
+        band = img[:, :, n]
+        h, w = band.shape
+        fft = np.fft.fft2(resize(band, (64, 64)))
+        log_amplitude, phase = np.log(np.absolute(fft)), np.angle(fft)
+        spectral_residual = log_amplitude - nd.uniform_filter(log_amplitude, size=3, mode='nearest')
+        smap = np.absolute(np.fft.ifft2(np.exp(spectral_residual + 1.j * phase)))
+        smap = nd.gaussian_filter(smap, sigma=3)
+        smaps.append(normalize(resize(smap, (w, h))))
+    return np.sum(np.dstack(smaps), axis=2)
 
 
-def saliency(hsi):
-    """Calculate saliency map of HSI cube"""
-    return np.sum(np.dstack([saliency_map(hsi[:, :, n]) for n in range(hsi.shape[2])]), axis=2)
-
-
-def get_spectrum(hsi, point=None):
-    """Get spectrum at a given point (x, y)
+def spectrum(img, point=None):
+    """Get the spectrum at a given point (x, y)
     
     When a point is not specified the spectrum of the most salient point is returned.
     """
     if point is None:
-        sal = saliency(hsi)
+        sal = saliency(img)
         idx = np.unravel_index(np.argmax(sal), sal.shape)
         point = (idx[1], idx[0])
-    return hsi[point[1], point[0], :]
+    return img[point[1], point[0], :]
