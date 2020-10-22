@@ -3,6 +3,7 @@ import spectral
 import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
+from sklearn.utils import resample
 from sklearn.decomposition import PCA
 from PIL import Image
 
@@ -77,6 +78,14 @@ def rgb(img, bands=None):
 def ndvi(img, red_band, nir_band):
     """Returns the NDVI image from the specified read and nir bands"""
     return spectral.ndvi(img, red_band, nir_band)
+
+
+def resample(img, n_samples=32):
+    """Resamples the number of spectral bands (n_samples)"""
+    h, w, d = img.shape
+    X = img.reshape((h * w), d)
+    r = resample(np.transpose(X), n_samples=n_samples)
+    return np.transpose(r).reshape(h, w, n_samples)
 
 
 def principal_components(img, n_components=3, spectrum=False):

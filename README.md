@@ -10,6 +10,12 @@ Abraia API extension for HyperSpectral Image (HSI) analysis.
 
 * Classification [![Classification](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/abraia/multiple/blob/main/notebooks/classification.ipynb)
 
+## Installation
+
+```sh
+python -m pip install git+git://github.com/abraia/abraia-multiple.git
+```
+
 ## Usage
 
 ```python
