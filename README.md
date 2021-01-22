@@ -33,6 +33,55 @@ meta = multiple.load_meta('test.hdr')
 multiple.save_image('test.hdr', img, metadata=meta)
 ```
 
+## Getting started
+Next, we revise the main steps to get started with 
+### Settings
+Once we have installed the package, we need to [get an API Key](https://abraia.me/console/settings) if we don't have one yet. Once we have it, we set the environment,
+    
+`import os
+from dotenv import load_dotenv
+load_dotenv()
+abraia_key = ''  #@param {type: "string"}
+%env ABRAIA_KEY=$abraia_key`
+
+### Get some sample data 
+To start with, we may [upload some data](https://abraia.me/console/gallery) or we may just get some sample data publicly available,
+
+`if not os.path.exists('PaviaU.mat') or not os.path.exists('PaviaU_gt.mat'):
+    !wget http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat`
+
+
+And then upload the data to the cloud
+`multiple.upload('PaviaU.mat')`
+
+### Read data from cloud
+Now, we can read data from our cloud and load a HSI cube in the variable img
+`img = multiple.load_image('PaviaU.mat')`
+
+### Basic HSI visualization
+As well, we can get some random bands from our HSI cube,
+`imgs, indexes = hsi.random(img)`
+
+and we can visualize these bands as like any other image array. For example,
+`fig, ax = plt.subplots(2, 3)
+ax = ax.reshape(-1)
+for i, im in enumerate(imgs):
+    ax[i].imshow(im, cmap='jet')
+    ax[i].axis('off')`
+    
+### Extraction of principal components and pseudocolor visualization
+
+A common operation with spectral images is to reduce the dimensionality, applying principal components analysis. We can get the first three principal components into a three bands pseudoimage,
+
+`pc_img = hsi.principal_components(img)`
+
+and we may visualize this pseudoimage
+ 
+`plt.title('Principal components')
+plt.imshow(pc_img)
+plt.axis('off')`
+
+
 ## License
 
 This software is licensed under the MIT License. [View the license](LICENSE).
