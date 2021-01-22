@@ -2,7 +2,7 @@
 
 # Multiple
 
-Abraia API extension for HyperSpectral Image (HSI) analysis.
+## Abraia API extension for HyperSpectral Image (HSI) analysis.
 
 The MULTIPLE Python package by ABRAIA provides a set of tools for seamless image processing and analysis. It supports a broad range of image types, including multispectral and hyperspectral images.
 
