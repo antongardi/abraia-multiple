@@ -6,9 +6,9 @@
 
 The MULTIPLE Python package by ABRAIA provides a set of tools for seamless image processing and analysis. It supports a broad range of image types, including multispectral and hyperspectral images.
 
-The package integrates state-of-the-art image manipulation libraries with ABRAIA's API. As a result, it enables a seamless use of Python notebooks to process image data and metadata stored in the cloud. Notebooks can be accessed through a common web browser running in any device -be mobile or desktop-, allowing an easy and fast prototyping of solutions.
+The package integrates state-of-the-art image manipulation libraries with ABRAIA's API. As a result, it enables a seamless use of Python notebooks to process image data and metadata stored in the cloud.
 
-A clear benefit of using Python is the immediate availability of the quickly growing ecosystem of machine learning and image analysis resources available in this language.
+A clear benefit of using Python is the immediate availability of the quickly growing ecosystem of machine learning and image analysis resources available in this language. Also, the ability to work on notebooks that can be accessed through a common web browser running in any device -be mobile or desktop-, allowing an easy, fast, and collaborative prototyping of solutions.
 
 * Getting started [![Getting started](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/abraia/multiple/blob/main/notebooks/getting-started.ipynb)
 
