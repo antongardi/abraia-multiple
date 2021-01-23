@@ -63,11 +63,12 @@ As well, we can get some random bands from our HSI cube,
 `imgs, indexes = hsi.random(img)`
 
 and we can visualize these bands as like any other image array. For example,
-`fig, ax = plt.subplots(2, 3)
+```fig, ax = plt.subplots(2, 3)
 ax = ax.reshape(-1)
 for i, im in enumerate(imgs):
     ax[i].imshow(im, cmap='jet')
-    ax[i].axis('off')`
+    ax[i].axis('off')
+```
     
 ### Extraction of principal components and pseudocolor visualization
 
@@ -77,9 +78,10 @@ A common operation with spectral images is to reduce the dimensionality, applyin
 
 and we may visualize this pseudoimage
  
-`plt.title('Principal components')
+```plt.title('Principal components')
 plt.imshow(pc_img)
-plt.axis('off')`
+plt.axis('off')
+```
 
 
 ## License
