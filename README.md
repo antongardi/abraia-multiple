@@ -38,17 +38,19 @@ Next, we revise the main steps to get started with
 ### Settings
 Once we have installed the package, we need to [get an API Key](https://abraia.me/console/settings) if we don't have one yet. Once we have it, we set the environment,
     
-`import os
+```import os
 from dotenv import load_dotenv
 load_dotenv()
 abraia_key = ''  #@param {type: "string"}
-%env ABRAIA_KEY=$abraia_key`
+%env ABRAIA_KEY=$abraia_key
+```
 
 ### Get some sample data 
 To start with, we may [upload some data](https://abraia.me/console/gallery) or we may just get some sample data publicly available,
 
-`if not os.path.exists('PaviaU.mat') or not os.path.exists('PaviaU_gt.mat'):
-    !wget http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat`
+```if not os.path.exists('PaviaU.mat') or not os.path.exists('PaviaU_gt.mat'):
+    !wget http://www.ehu.eus/ccwintco/uploads/e/ee/PaviaU.mat
+```
 
 
 And then upload the data to the cloud
