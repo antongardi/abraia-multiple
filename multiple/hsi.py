@@ -11,8 +11,6 @@ from PIL import Image
 cf = os.path.dirname(os.path.abspath(__file__))
 
 try:
-    # HDR IMEC 463.50, 469.22, 477.88, 490.49, 502.47, 513.95, 524.59, 539.51, 552.80, 555.12, 565.04, 578.94, 592.51, 601.11, 	# 623.50, 630.70
-    # Redondeadas 463, 469, 478, 490, 502, 514, 525, 540, 553, 555, 565, 579, 593, 601, 623, 631
     BANDS_WLTH = np.array([463, 469, 478, 490, 502, 514, 525, 540, 553, 555, 565, 579, 593, 601, 623, 631])
     CMF = np.array(np.loadtxt(os.path.join(cf, 'cie-cmf_1nm.txt'), usecols=(0, 1, 2, 3)))
 except:
@@ -34,7 +32,7 @@ def __spec_to_xyz(hsi, bands=BANDS_WLTH):
 
 def __xyz_to_sRGB(XYZ):
     """Convert XYZ (CIE1931) image to sRGB image"""
-    X, Y, Z = XYZ[:, :, 0], XYZ[:, :, 1], XYZ[:, :, 2] 
+    X, Y, Z = XYZ[:, :, 0], XYZ[:, :, 1], XYZ[:, :, 2]
     # https://en.wikipedia.org/wiki/SRGB
     r = 3.24096994 * X - 1.53738318 * Y - 0.49861076 * Z
     g = -0.96924364 * X + 1.8759675 * Y + 0.04155506 * Z
@@ -127,7 +125,7 @@ def saliency(img):
 
 def spectrum(img, point=None):
     """Get the spectrum at a given point (x, y)
-    
+
     When a point is not specified the spectrum of the most salient point is returned.
     """
     if point is None:
