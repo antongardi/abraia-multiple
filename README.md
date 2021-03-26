@@ -19,14 +19,14 @@ python -m pip install git+git://github.com/abraia/abraia-multiple.git
 ## Configuration
 
 Installed the package, you have to configure your [ABRAIA KEY](https://abraia.me/console/settings) as environment variable:
-   
-```
+
+```sh
 export ABRAIA_KEY=api_key
 ```
 
 On Windows you need to use `set` instead of `export`:
 
-```
+```sh
 set ABRAIA_KEY=api_key
 ```
 
@@ -76,7 +76,7 @@ for i, im in enumerate(imgs):
     ax[i].imshow(im, cmap='jet')
     ax[i].axis('off')
 ```
-    
+
 ### Pseudocolor visualization
 
 A common operation with spectral images is to reduce the dimensionality, applying principal components analysis (PCA). We can get the first three principal components into a three bands pseudoimage,
@@ -86,7 +86,7 @@ pc_img = hsi.principal_components(img)
 ```
 
 and visualize this pseudoimage,
- 
+
 ```python
 plt.title('Principal components')
 plt.imshow(pc_img)
