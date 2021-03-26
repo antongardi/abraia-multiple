@@ -1,4 +1,7 @@
+wget==3.2.0
 abraia==0.6.6
+pandas==1.2.3
 spectral==0.22.1
+matplotlib==3.4.0
 scikit-learn==0.24.1
 python-dotenv==0.15.0
