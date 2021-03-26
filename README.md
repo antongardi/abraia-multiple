@@ -2,9 +2,13 @@
 
 # Multiple - HyperSpectral Image (HSI) analysis
 
-The MULTIPLE Python package by ABRAIA provides a seamless integration of multiple image processing tools for multispectral and hyperspectral image processing and analysis. The package integrates state-of-the-art image manipulation libraries and the ABRAIA API service to provide scalable cloud storage and management for multispectral image data and metdata. Also, it provides working notebooks ready to be used through a common web browser running in any device -be mobile or desktop-, allowing an easy, fast, and collaborative prototyping of solutions.
+MULTIPLE is a Python package by ABRAIA which provides seamless integration of multiple hyperspectral image processing and analysis tools. The package integrates the ABRAIA API service and state-of-the-art image manipulation libraries to provide ready to go scalable multispectral solutions.
+
+You can directly start from your browser with one of the notebooks available. Just click on notebook link bellow:
 
 * Getting started [![Getting started](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/abraia/multiple/blob/main/notebooks/getting-started.ipynb)
+
+* Analysis [![Analysis](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/abraia/multiple/blob/main/notebooks/analysis.ipynb)
 
 * Classification [![Classification](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/abraia/multiple/blob/main/notebooks/classification.ipynb)
 
@@ -92,6 +96,10 @@ plt.title('Principal components')
 plt.imshow(pc_img)
 plt.axis('off')
 ```
+
+## Hyperspectral datasets
+
+
 
 ## License
 
