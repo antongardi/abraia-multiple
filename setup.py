@@ -12,7 +12,7 @@ with pathlib.Path('requirements.txt').open() as requirements_txt:
 
 setup(
     name='multiple',
-    version='0.1',
+    version='0.2.0',
     description='Abraia Multiple SDK',
     long_description=long_description,
     long_description_content_type='text/markdown',
